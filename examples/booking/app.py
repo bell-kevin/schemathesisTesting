@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -15,16 +16,22 @@ def verify_token(authorization: Optional[str] = Header(None)) -> bool:
     return True
 
 
+class RoomType(str, Enum):
+    standard = "standard"
+    deluxe = "deluxe"
+    suite = "suite"
+
+
 class BookingRequest(BaseModel):
     guest_name: str = Field(min_length=2, max_length=100)
-    room_type: str
+    room_type: RoomType
     nights: int = Field(gt=0, le=365)
 
 
 class BookingResponse(BaseModel):
     booking_id: str
     guest_name: str
-    room_type: str
+    room_type: RoomType
     nights: int
     status: str
     price_per_night: float
@@ -34,7 +41,11 @@ class BookingResponse(BaseModel):
 @app.post("/bookings", response_model=BookingResponse, responses={400: {"description": "Invalid booking"}})  # type: ignore[misc]
 def create_booking(booking: BookingRequest, _: bool = Depends(verify_token)) -> BookingResponse:
     # Calculate price based on room type
-    room_prices = {"standard": 99.99, "deluxe": 149.99, "suite": 299.99}
+    room_prices = {
+        RoomType.standard: 99.99,
+        RoomType.deluxe: 149.99,
+        RoomType.suite: 299.99,
+    }
 
     price_per_night = room_prices[booking.room_type]
     total_price = price_per_night * booking.nights
