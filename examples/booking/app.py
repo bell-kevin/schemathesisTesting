@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -14,10 +15,14 @@ def verify_token(authorization: Optional[str] = Header(None)) -> bool:
         raise HTTPException(status_code=401, detail="Invalid or missing token")
     return True
 
+class RoomType(str, Enum):
+    standard = "standard"
+    deluxe = "deluxe" 
+    suite = "suite"
 
 class BookingRequest(BaseModel):
     guest_name: str = Field(min_length=2, max_length=100)
-    room_type: str
+    room_type: RoomType
     nights: int = Field(gt=0, le=365)
 
 
